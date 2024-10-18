@@ -4,6 +4,11 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from matplotlib.animation import FuncAnimation
 
+"""
+This is a client TCP socket that receives gyroscope data from my phone.
+The server socket is run on my phone using this app https://github.com/yaqwsx/SensorStreamer.
+"""
+
 HOST = "192.168.1.67"  # The server's hostname or IP address
 PORT = 65002  # The port used by the server
 
@@ -30,8 +35,6 @@ def saveJson(jsonCharArr, jsonArray):
         
         dt = dt + timedelta(hours=5)
         dt = dt + timedelta(minutes=37)
-        # dt = dt.time()
-        # dt = dt.strftime("%H:%M:%S")
         
         jsonArray[3].append(dt)
     except json.JSONDecodeError:
@@ -40,7 +43,11 @@ def saveJson(jsonCharArr, jsonArray):
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    # connects to the phone's server socket
     s.connect((HOST, PORT))
+    
+    # initialises the array that will hold the gyroscope data. First element is an array holding x rotational data. Second is y rotational data
+    # Third is z rotational data. Fourth holds the time stamps
     dataArray = [[], [], [], []]
     
     plt.ion()  # Turn on interactive mode
@@ -60,6 +67,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # parsed_data = json.loads(data)
         count = 0
         jsonCharArr = []
+        # The data received consists of a string that contains multiple json objects
+        # Therefore this loop is needed to break down that string into singular json strings that get parsed later on
         for char in data:
             if char == "\n":
                 continue
@@ -90,7 +99,3 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         
         plt.draw()
         plt.pause(0.01)
-        
-        
-    plt.ioff()
-    plt.show()
