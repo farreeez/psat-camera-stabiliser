@@ -6,7 +6,7 @@ from matplotlib.animation import FuncAnimation
 
 """
 This is a client TCP socket that receives gyroscope data from my phone.
-The server socket is run on my phone using this app https://github.com/yaqwsx/SensorStreamer.
+The server socket is run on an android phone using this app https://github.com/yaqwsx/SensorStreamer.
 """
 
 HOST = "192.168.1.67"  # The server's hostname or IP address
