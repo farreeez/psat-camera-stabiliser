@@ -6,8 +6,8 @@ from math import cos, sin
 
 
 def getMidPointOfRect(rect):
-    x = round((rect[0][0] + rect[1][0]) / 2)
-    y = round((rect[0][1] + rect[3][1]) / 2)
+    x = (rect[0][0] + rect[1][0]) / 2
+    y = (rect[0][1] + rect[3][1]) / 2
 
     return [x, y]
 
@@ -16,7 +16,7 @@ def rotatePoint(pointXY, rotationRad):
     rotatedX = pointXY[0] * cos(rotationRad) - pointXY[1] * sin(rotationRad)
     rotatedY = pointXY[1] * cos(rotationRad) + pointXY[0] * sin(rotationRad)
 
-    return [round(rotatedX), round(rotatedY)]
+    return [(rotatedX), (rotatedY)]
 
 
 # for the angle counter clock wise is positive
@@ -39,8 +39,6 @@ def rotateCamera(rectCoordsXY, rotationDeg):
 
 def translateCamera(rectCoordsXY, xMovement, yMovement):
     # unsure if this is needed
-    # rotatedMovement = rotatePoint([xMovement, yMovement], math.radians(rotationDeg))
-
     for i in range(len(rectCoordsXY)):
         rectCoordsXY[i] = [
             a + b for a, b in zip(rectCoordsXY[i], [xMovement, yMovement])
@@ -48,17 +46,54 @@ def translateCamera(rectCoordsXY, xMovement, yMovement):
 
 
 def streamCroppedImg(croppedFrame, frame, rectCoordsXY, croppedHeight, croppedWidth):
-    heightInterval = (rectCoordsXY[2][1] - rectCoordsXY[0][1]) / croppedHeight
-    widthInterval = (rectCoordsXY[1][0] - rectCoordsXY[0][0]) / croppedWidth
+    xDifference = rectCoordsXY[2][0] - rectCoordsXY[0][0]
+
+    if xDifference == 0:
+        xDifference = 0.000001
+
+    heightGrad = (rectCoordsXY[2][1] - rectCoordsXY[0][1]) / (xDifference)
+
+    xSign = (xDifference) / abs(xDifference)
+
+    heightXInterval = math.sqrt(1 / (heightGrad**2 + 1)) * xSign
+
+    heightYInterval = heightXInterval * heightGrad
+
+    xDifference = rectCoordsXY[1][0] - rectCoordsXY[0][0]
+
+    if xDifference == 0:
+        xDifference = 0.000001
+
+    widthGrad = (rectCoordsXY[1][1] - rectCoordsXY[0][1]) / (xDifference)
+
+    xSign = (xDifference) / abs(xDifference)
+
+    widthXInterval = math.sqrt(1 / (widthGrad**2 + 1)) * xSign
+
+    widthYInterval = widthXInterval * widthGrad
+
+    rowPoint = [rectCoordsXY[0][0], rectCoordsXY[0][1]]
 
     for i in range(croppedHeight):
-        row = round(rectCoordsXY[0][1] + heightInterval * i)
-        for j in range(croppedWidth):
-            col = round(rectCoordsXY[0][0] + widthInterval * j)
+        rowPoint[0] += heightXInterval
+        rowPoint[1] += heightYInterval
+        
+        colPoint = [0,0]
 
-            # if the pixel is within range then copy the colour else make the pixel black
-            if row < frame.shape[0] and col < frame.shape[1] and row > -1 and col > -1:
-                croppedFrame[i][j] = frame[row][col]
+        for j in range(croppedWidth):
+            colPoint[0] += widthXInterval
+            colPoint[1] += widthYInterval
+
+            roundPoint = [round(rowPoint[0] + colPoint[0]), round(rowPoint[1] + colPoint[1])]
+
+            # # if the pixel is within range then copy the colour else make the pixel black
+            if (
+                roundPoint[1] < frame.shape[0]
+                and roundPoint[0] < frame.shape[1]
+                and roundPoint[1] > -1
+                and roundPoint[0] > -1
+            ):
+                croppedFrame[i][j] = frame[roundPoint[1]][roundPoint[0]]
             else:
                 croppedFrame[i][j] = 0
 
@@ -86,23 +121,14 @@ topLeftCoord = [200, 150]
 
 # order of corner coords: left to right top to bottom (width is the first element and height is the second element opposite the array notation)
 rectCoordsXY = [
-    [topLeftCoord[0], topLeftCoord[1]],
+    [topLeftCoord[0] + 0.000001, topLeftCoord[1]],
     [croppedWidth - 1 + topLeftCoord[0], topLeftCoord[1]],
     [topLeftCoord[0], croppedHeight - 1 + topLeftCoord[1]],
     [croppedWidth - 1 + topLeftCoord[0], croppedHeight - 1 + topLeftCoord[1]],
 ]
 
-test = [[-1,1], [1,1], [-1,-1], [1,-1]]
-
-rotateCamera(rectCoordsXY=test, rotationDeg=40)
-
-# translateCamera(test, 1, 0, 90)
-
-print(test)
-
-run = False
+run = True
 croppedFrame = np.zeros((croppedHeight, croppedWidth, 3), dtype=np.uint8)
-
 while run:
     ret, frame = cap.read()
     if not ret:
@@ -113,6 +139,7 @@ while run:
     yMovement = 0
     rotation = 0
 
+    # this is for testing
     if keyboard.is_pressed("right arrow"):
         xMovement += 10
 
@@ -124,15 +151,15 @@ while run:
 
     if keyboard.is_pressed("down arrow"):
         yMovement += 10
-        
+
     if keyboard.is_pressed("a"):
-        rotation -= 10
-    
-    if keyboard.is_pressed("d"):
+        rotation -= 90
+
+    if cv2.waitKey(1) & 0xFF == ord("d"):
         rotation += 10
-        
+
     rotateCamera(rectCoordsXY, rotation)
-        
+
     translateCamera(rectCoordsXY, xMovement, yMovement)
 
     streamCroppedImg(croppedFrame, frame, rectCoordsXY, croppedHeight, croppedWidth)
@@ -143,38 +170,3 @@ while run:
 
 cap.release()
 cv2.destroyAllWindows()
-
-
-# def moveCamera(
-#     frame, topLeftCoord, croppedHeight, croppedWidth, xMovement, yMovement, rotation
-# ):
-#     imgHeight = frame.shape[0]
-#     imgWidth = frame.shape[1]
-
-#     if croppedHeight > imgHeight or croppedWidth > imgWidth:
-#         raise Exception("Cropped frame cannot be larger than the original frame")
-
-#     topLeftCoord[0] += yMovement
-#     topLeftCoord[1] += xMovement
-
-#     croppedY = topLeftCoord[0]
-#     croppedX = topLeftCoord[1]
-
-#     if croppedY < 0:
-#         croppedY = 0
-
-#     if croppedX < 0:
-#         croppedX = 0
-
-#     if croppedY + croppedHeight >= imgHeight:
-#         croppedY = imgHeight - croppedHeight
-
-#     if croppedX + croppedWidth >= imgWidth:
-#         croppedX = imgWidth - croppedWidth
-
-#     cropped = frame[
-# croppedY : (croppedY + croppedHeight), croppedX : (croppedX + croppedWidth), 0:3
-#     ]
-
-#     cv2.imshow("Camera", frame)
-#     cv2.imshow("Camera2", cropped)
