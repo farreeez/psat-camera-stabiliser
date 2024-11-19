@@ -4,7 +4,7 @@ import json
 import matplotlib.pyplot as plt
 import improvedCamera
 import math
-from datetime import datetime, timedelta
+import time
 
 """
 This is a client TCP socket that receives gyroscope data from my phone.
@@ -46,7 +46,7 @@ def saveJson(jsonCharArr, jsonArray, rotationArray):
 
         if jsonArray and all(jsonArray):
             # sets weights for complementary filter
-            gyroWeight = 0.995
+            gyroWeight = 1
             accelWeight = 1 - gyroWeight
     
             maxCol = len(jsonArray[0]) - 1
@@ -92,13 +92,13 @@ def saveJson(jsonCharArr, jsonArray, rotationArray):
             totRotX = weightedAccelRotX + weightedGyroRotX
             totRotY = weightedAccelRotY + weightedGyroRotY
             
-            rotationArray[0].append(totGyroX)
-            rotationArray[1].append(totGyroY)
-            rotationArray[2].append(accelRotX)
-            rotationArray[3].append(accelRotY)
-            rotationArray[4].append(totRotX)
-            rotationArray[5].append(totRotY)
-            rotationArray[6].append(timestamp_ns)
+            # rotationArray[0].append(totGyroX)
+            # rotationArray[1].append(totGyroY)
+            # rotationArray[2].append(accelRotX)
+            # rotationArray[3].append(accelRotY)
+            # rotationArray[4].append(totRotX)
+            # rotationArray[5].append(totRotY)
+            # rotationArray[6].append(timestamp_ns)
             
             # sets the total rotation up to this step to the calculated values for it to be then used later
             improvedCamera.rotateX(totRotX)
@@ -123,33 +123,50 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     dataArray = [[], [], [], [], [], [], []]
     rotationArray = [[], [], [], [], [], [], []]
 
-    plt.ion()  # Turn on interactive mode
-    fig, ax = plt.subplots()
+    # plt.ion()  # Turn on interactive mode
+    # fig, ax = plt.subplots()
 
-    (line1,) = ax.plot([], [], color="red", label="gyro rotation about x")  # First line
-    (line2,) = ax.plot([], [], color="blue", label="gyro rotation about y")  # Second line
-    (line3,) = ax.plot([], [], color="green", label="accel rotation about x")  # Third line
-    (line4,) = ax.plot([], [], color="grey", label="accel rotation about y")  # Third line
+    # (line1,) = ax.plot([], [], color="red", label="gyro rotation about x")  # First line
+    # (line2,) = ax.plot([], [], color="blue", label="gyro rotation about y")  # Second line
+    # (line3,) = ax.plot([], [], color="green", label="accel rotation about x")  # Third line
+    # (line4,) = ax.plot([], [], color="grey", label="accel rotation about y")  # Third line
 
-    ax.set_xlabel("Time")
-    ax.set_ylabel("accel-data")
-    ax.set_title("real time accel data")
-    ax.legend()
+    # ax.set_xlabel("Time")
+    # ax.set_ylabel("accel-data")
+    # ax.set_title("real time accel data")
+    # ax.legend()
     
-    fig1, ax1 = plt.subplots()
+    # fig1, ax1 = plt.subplots()
 
-    (line11,) = ax1.plot([], [], color="red", label="rotation about x")  # First line
-    (line21,) = ax1.plot([], [], color="blue", label="rotation about y")  # Second line
+    # (line11,) = ax1.plot([], [], color="red", label="rotation about x")  # First line
+    # (line21,) = ax1.plot([], [], color="blue", label="rotation about y")  # Second line
 
-    ax1.set_xlabel("Time")
-    ax1.set_ylabel("gyro-data")
-    ax1.set_title("real time gyro data")
-    ax1.legend()
+    # ax1.set_xlabel("Time")
+    # ax1.set_ylabel("gyro-data")
+    # ax1.set_title("real time gyro data")
+    # ax1.legend()
+    
+    previous_time = time.time()  # Record the initial time
+    total_time = 0  # Accumulate time differences
+    iteration_count = 0  # Count iterations
 
     while True:
         data = s.recv(1024).decode("utf-8")
-        # parsed_data = json.loads(data)
-        count = 0
+        
+        # current_time = time.time()  # Get the current time
+    
+        # # Calculate the time difference
+        # time_diff = current_time - previous_time
+        # total_time += time_diff  # Update total time
+        # iteration_count += 1  # Increment iteration count
+        
+        # # Calculate and print the average time difference
+        # average_time = total_time / iteration_count
+        # print(f"Iteration {iteration_count}: Time diff = {time_diff:.6f} s, Average = {average_time:.6f} s")
+        
+        # # Update the previous_time for the next iteration
+        # previous_time = current_time
+        
         jsonCharArr = []
 
         counter = 0
@@ -171,28 +188,28 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
         saveJson(jsonCharArr, dataArray, rotationArray)
 
-        line1.set_xdata(rotationArray[6])
-        line2.set_xdata(rotationArray[6])
-        line3.set_xdata(rotationArray[6])
-        line4.set_xdata(rotationArray[6])
+        # line1.set_xdata(rotationArray[6])
+        # line2.set_xdata(rotationArray[6])
+        # line3.set_xdata(rotationArray[6])
+        # line4.set_xdata(rotationArray[6])
 
-        line1.set_ydata(rotationArray[0])
-        line2.set_ydata(rotationArray[1])
-        line3.set_ydata(rotationArray[2])
-        line4.set_ydata(rotationArray[3])
+        # line1.set_ydata(rotationArray[0])
+        # line2.set_ydata(rotationArray[1])
+        # line3.set_ydata(rotationArray[2])
+        # line4.set_ydata(rotationArray[3])
 
-        ax.relim()  # Recalculate limits
-        ax.autoscale_view()  # Autoscale the view
+        # ax.relim()  # Recalculate limits
+        # ax.autoscale_view()  # Autoscale the view
         
         
-        line11.set_xdata(rotationArray[6])
-        line21.set_xdata(rotationArray[6])
+        # line11.set_xdata(rotationArray[6])
+        # line21.set_xdata(rotationArray[6])
 
-        line11.set_ydata(rotationArray[4])
-        line21.set_ydata(rotationArray[5])
+        # line11.set_ydata(rotationArray[4])
+        # line21.set_ydata(rotationArray[5])
 
-        ax1.relim()  # Recalculate limits
-        ax1.autoscale_view()  # Autoscale the view
+        # ax1.relim()  # Recalculate limits
+        # ax1.autoscale_view()  # Autoscale the view
 
-        plt.draw()
-        plt.pause(0.01)
+        # plt.draw()
+        # plt.pause(0.01)

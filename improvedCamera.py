@@ -48,8 +48,6 @@ def rotate_frame(frame, angle, origin):
 def run_camera():
     cap = cv2.VideoCapture(0)
     
-    x, y, width, height = 100, 100, 200, 200
-    
     maxY = 510
     maxX = 1070
 
@@ -61,7 +59,9 @@ def run_camera():
     while True:
         # Capture frame-by-frame
         ret, frame = cap.read()
-
+        
+        x, y, width, height = 500, 100, 200, 200
+        
         height = min(height, frame.shape[0] - y)
         width = min(width, frame.shape[1] - x)
 
@@ -70,8 +70,10 @@ def run_camera():
         global zRot
 
         # xRot and yRot are rotations about their respective axis therefore xRot affects the y pixels and vice versa
-        # y = round(y + 25 * math.degrees(xRot))
-        # x = round(x + 25 * math.degrees(yRot))
+        
+        print(xRot)
+        y = round(y + 30 * math.degrees(xRot))
+        x = round(x + 25 * math.degrees(yRot))
         
         x = max(0, x)
         x = min(x, maxX)
@@ -80,23 +82,23 @@ def run_camera():
 
         # TODO: fix rotation about z axis and re-enable it
         rtFrame = rotate_frame(
-            frame, math.degrees(0), (x + width / 2, y + height / 2)
+            frame, math.degrees(zRot), (x + width / 2, y + height / 2)
         )
         
         cropped_frame = rtFrame[y : y + height, x : x + width]
 
         # this is for testing
         if keyboard.is_pressed("right arrow"):
-            x += 10
+            x += 30
 
         if keyboard.is_pressed("left arrow"):
-            x -= 10
+            x -= 30
 
         if keyboard.is_pressed("up arrow"):
-            y -= 10
+            y -= 30
 
         if keyboard.is_pressed("down arrow"):
-            y += 10
+            y += 30
 
         if keyboard.is_pressed("a"):
             zRot -= 10
