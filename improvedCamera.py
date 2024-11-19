@@ -1,13 +1,6 @@
 import cv2
-import numpy as np
 import keyboard
-import threading
-import socket
-import json
-import matplotlib.pyplot as plt
-import improvedCamera
-from datetime import datetime, timedelta
-from matplotlib.animation import FuncAnimation
+import math
 
 zRot = 0
 xRot = 0
@@ -54,13 +47,16 @@ def rotate_frame(frame, angle, origin):
 
 def run_camera():
     cap = cv2.VideoCapture(0)
+    
+    x, y, width, height = 100, 100, 200, 200
+    
+    maxY = 510
+    maxX = 1070
 
     # Check if the webcam is opened correctly
     if not cap.isOpened():
         print("Error: Could not access the camera.")
         exit()
-
-    x, y, width, height = 100, 100, 200, 200
 
     while True:
         # Capture frame-by-frame
@@ -72,14 +68,21 @@ def run_camera():
         global xRot
         global yRot
         global zRot
+
+        # xRot and yRot are rotations about their respective axis therefore xRot affects the y pixels and vice versa
+        # y = round(y + 25 * math.degrees(xRot))
+        # x = round(x + 25 * math.degrees(yRot))
         
-        x = round(xRot + x)
-        y = round(yRot + y)
+        x = max(0, x)
+        x = min(x, maxX)
+        y = max(0, y)
+        y = min(y, maxY)
 
-        # tFrame = translate_frame(frame, xMovement, yMovement)
-
-        rtFrame = rotate_frame(frame, zRot, (x + width / 2, y + height / 2))
-
+        # TODO: fix rotation about z axis and re-enable it
+        rtFrame = rotate_frame(
+            frame, math.degrees(0), (x + width / 2, y + height / 2)
+        )
+        
         cropped_frame = rtFrame[y : y + height, x : x + width]
 
         # this is for testing
